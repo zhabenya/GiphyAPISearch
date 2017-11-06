@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="globalSuite" verbose="1">
+    <test name="MainTest">
+        <classes>
+            <class name="SearchEndpointTest"/>
+        </classes>
+    </test>
+</suite>
