@@ -49,6 +49,11 @@ public class GiphyApi {
         return this;
     }
 
+    public GiphyApi setRating(String rating) {
+        setParameter("rating", rating);
+        return this;
+    }
+
     public List sendRequest() {
         return sendRequestAndGetJson(200, true).getList("data");
     }
@@ -57,14 +62,18 @@ public class GiphyApi {
         return sendRequestAndGetJson(401, false).get("message");
     }
 
-    public String sendInvalidApiRequest() {
+    public String sendInvalidApiKeyRequest() {
         return sendRequestAndGetJson(403, true).get("message");
     }
 
-    public List sendRequestAndGetResponseIds() {
+    public String sendInvalidRatingRequest() {
+        return sendRequestAndGetJson(400, true).get("meta.msg");
+    }
+
+    public List sendRequestAndGetResponseByKey(String key) {
         List idList = new ArrayList();
         new JsonParser().parse(sendRequestAndGetJson(200, true).prettify()).getAsJsonObject().get("data")
-                .getAsJsonArray().forEach(jsonElement -> idList.add(jsonElement.getAsJsonObject().get("id").getAsString()));
+                .getAsJsonArray().forEach(jsonElement -> idList.add(jsonElement.getAsJsonObject().get(key).getAsString()));
         return idList;
     }
 

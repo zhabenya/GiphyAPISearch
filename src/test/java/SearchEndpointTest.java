@@ -8,15 +8,14 @@ import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.getProperty;
 import static java.util.logging.Logger.getLogger;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.*;
 
 public class SearchEndpointTest {
     private static final Logger logger = getLogger(SearchEndpointTest.class.getName());
     private GiphyApi giphyApi;
     private String query;
+    private String expectedMessage;
     private String responseMessage;
-    private String actualMessage;
 
     @BeforeMethod
     public void initApi() {
@@ -33,17 +32,17 @@ public class SearchEndpointTest {
 
     @Test
     public void testIncorrectApiKey() {
-        responseMessage = "Invalid authentication credentials";
-        actualMessage = giphyApi.setQuery(query)
-                .setApiKey("11111")
-                .sendInvalidApiRequest();
+        expectedMessage = "Invalid authentication credentials";
+        responseMessage = giphyApi.setQuery(query)
+                .setApiKey("42")
+                .sendInvalidApiKeyRequest();
         checkResponseMessage();
     }
 
     @Test
     public void testMissingApiKey() {
-        responseMessage = "No API key found in request";
-        actualMessage = giphyApi.sendNoApiKeyRequest();
+        expectedMessage = "No API key found in request";
+        responseMessage = giphyApi.sendNoApiKeyRequest();
         checkResponseMessage();
     }
 
@@ -66,13 +65,13 @@ public class SearchEndpointTest {
     @Test
     public void testLimitAndOffset() {
         List response = giphyApi.setQuery(query)
-                .sendRequestAndGetResponseIds();
+                .sendRequestAndGetResponseByKey("id");
 
         int limit = 5;
         int offset = 3;
         List responseWithOffset = giphyApi.setLimit(valueOf(limit))
                 .setOffset(valueOf(offset))
-                .sendRequestAndGetResponseIds();
+                .sendRequestAndGetResponseByKey("id");
         assertEquals(responseWithOffset.size(), limit);
 
         response = response.subList(offset, offset + limit);
@@ -99,8 +98,29 @@ public class SearchEndpointTest {
         assertEquals(response.isEmpty(), emptyList);
     }
 
+    @Test()
+    public void testRatingParameter() {
+        logger.info("Check response doesn't contain results with rating lower than 'pg'");
+        List response = giphyApi.setQuery("criminal")
+                .setRating("pg")
+                .setLimit("100")
+                .sendRequestAndGetResponseByKey("rating");
+        assertFalse(response.contains("pg-13"));
+        assertFalse(response.contains("r"));
+    }
+
+    @Test
+    public void testIncorrectRatingParameter() {
+        expectedMessage = "Invalid rating format";
+        responseMessage = giphyApi.setQuery(query)
+                .setRating("42")
+                .sendInvalidRatingRequest();
+        logger.info(format("Check response message contains [%s]", expectedMessage));
+        assertTrue(responseMessage.contains(expectedMessage));
+    }
+
     private void checkResponseMessage() {
-        logger.info(format("Check response message is [%s]", responseMessage));
-        assertEquals(actualMessage, responseMessage);
+        logger.info(format("Check response message is [%s]", expectedMessage));
+        assertEquals(responseMessage, expectedMessage);
     }
 }
